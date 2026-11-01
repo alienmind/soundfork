@@ -143,6 +143,11 @@ void SecondaryOutputDevice::setEnabled(bool shouldBeEnabled)
         reset();
 }
 
+void SecondaryOutputDevice::setProfile(int profileIndex)
+{
+    profile = juce::jlimit(0, (int) kDeviceProfiles.size() - 1, profileIndex);
+}
+
 void SecondaryOutputDevice::openCurrentDevice()
 {
     if (currentDeviceName.isEmpty())
@@ -205,10 +210,25 @@ void SecondaryOutputDevice::audioDeviceIOCallbackWithContext(const float* const*
     }
 
     fifo.finishedRead(available);
+
+    if (numOutputChannels > 0 && outputChannelData[0] != nullptr)
+    {
+        juce::ScopedNoDenormals noDenormals;
+        auto* right = numOutputChannels > 1 ? outputChannelData[1] : nullptr;
+        profileChain.process(profile.load(), outputChannelData[0], right, numSamples);
+
+        // Any further channels carry the last host channel, so they follow the processed right.
+        for (int ch = 2; right != nullptr && ch < numOutputChannels; ++ch)
+            if (outputChannelData[ch] != nullptr)
+                juce::FloatVectorOperations::copy(outputChannelData[ch], right, numSamples);
+    }
 }
 
-void SecondaryOutputDevice::audioDeviceAboutToStart(juce::AudioIODevice*)
+void SecondaryOutputDevice::audioDeviceAboutToStart(juce::AudioIODevice* device)
 {
+    // The filters are tuned to the rate the device really runs at, which may not be the host's.
+    profileChain.prepare(device->getCurrentSampleRate(), profile.load());
+
     // Discard anything left from the last run so playback starts current.
     fifo.finishedRead(fifo.getNumReady());
     deviceRunning = true;
@@ -225,6 +245,8 @@ juce::ValueTree SecondaryOutputDevice::getState() const
     tree.setProperty("deviceName", currentDeviceName, nullptr);
     tree.setProperty("bufferSize", latencyBufferSizeSamples, nullptr);
     tree.setProperty("enabled", enabled.load(), nullptr);
+    // By name, so saved sets survive a reordering of the profile list.
+    tree.setProperty("profile", juce::String(kDeviceProfiles[(size_t) profile.load()].name), nullptr);
     return tree;
 }
 
@@ -235,5 +257,12 @@ void SecondaryOutputDevice::setState(const juce::ValueTree& tree)
 
     currentDeviceName = tree.getProperty("deviceName", "");
     latencyBufferSizeSamples = tree.getProperty("bufferSize", 1024);
+
+    const auto profileName = tree.getProperty("profile", "").toString();
+    profile = 0;
+    for (size_t i = 0; i < kDeviceProfiles.size(); ++i)
+        if (profileName == kDeviceProfiles[i].name)
+            profile = (int) i;
+
     setEnabled((bool) tree.getProperty("enabled", false));
 }

@@ -1,0 +1,7 @@
+{
+    "cmake.cmakePath": "${env:LOCALAPPDATA}/Microsoft/WinGet/Links/cmake.exe",
+    "cmake.generator": "Visual Studio 18 2026",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureOnOpen": false,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}
