@@ -4,11 +4,10 @@
   <img src="images/logo.jpg" alt="SoundFork logo" width="600">
 </p>
 
-A VST3 effect for the end of a DAW's master bus (built with Ableton Live in mind).
+A VST3 effect for the end of a DAW's master bus. Tested in Ableton Live 12 only.
 It passes the master signal through completely unchanged, with zero added latency,
-and mirrors a copy of it to a second, independently chosen Windows audio output
-device (e.g. a Bluetooth headset), so you can monitor on your low-latency audio
-interface and a second device at the same time without the second device's
+and mirrors a copy of it to a second, independently chosen audio output
+device (e.g. a Bluetooth headset), so you can split the signal without
 buffering ever affecting the main signal path.
 
 ## Formats
@@ -126,3 +125,9 @@ The code is written entirely against portable JUCE APIs (`AudioDeviceManager`,
 `AudioIODeviceCallback`) with nothing Windows-specific, so an AU/VST3 build
 for macOS should mostly be a matter of adding `AU` to `FORMATS` in
 `CMakeLists.txt` and building on a Mac. Not attempted yet.
+
+## License
+
+[AGPLv3](LICENSE), because SoundFork is built on the open-source edition of
+[JUCE](https://juce.com), which uses that license. The AAX and VST3 SDKs bundled with JUCE
+are used under their GPLv3 option.

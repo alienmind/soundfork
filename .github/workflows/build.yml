@@ -64,9 +64,9 @@ jobs:
           $version = "${{ steps.version.outputs.version }}"
           $artefacts = "build/SoundFork_artefacts/Release"
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive "$artefacts/VST3/SoundFork.vst3" "dist/SoundFork-$version-windows-x64-VST3.zip"
-          Compress-Archive "$artefacts/AAX/SoundFork.aaxplugin" "dist/SoundFork-$version-windows-x64-AAX-untested.zip"
-          Compress-Archive "$artefacts/Standalone/SoundFork.exe" "dist/SoundFork-$version-windows-x64-Standalone.zip"
+          Compress-Archive "$artefacts/VST3/SoundFork.vst3", LICENSE "dist/SoundFork-$version-windows-x64-VST3.zip"
+          Compress-Archive "$artefacts/AAX/SoundFork.aaxplugin", LICENSE "dist/SoundFork-$version-windows-x64-AAX-untested.zip"
+          Compress-Archive "$artefacts/Standalone/SoundFork.exe", LICENSE "dist/SoundFork-$version-windows-x64-Standalone.zip"
 
       - uses: actions/upload-artifact@v4
         with:

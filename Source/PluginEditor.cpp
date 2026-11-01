@@ -170,14 +170,19 @@ SoundForkAboutTab::SoundForkAboutTab()
     copyrightLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(copyrightLabel);
 
+    licenceLabel.setText("Licensed under AGPLv3, with no warranty. Source:", juce::dontSendNotification);
+    licenceLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(licenceLabel);
+
     addAndMakeVisible(repoLink);
 }
 
 void SoundForkAboutTab::resized()
 {
-    auto area = getLocalBounds().withSizeKeepingCentre(getWidth(), 84);
+    auto area = getLocalBounds().withSizeKeepingCentre(getWidth(), 112);
     nameLabel.setBounds(area.removeFromTop(28));
     copyrightLabel.setBounds(area.removeFromTop(28));
+    licenceLabel.setBounds(area.removeFromTop(28));
     repoLink.setBounds(area);
 }
 

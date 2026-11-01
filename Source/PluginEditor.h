@@ -46,6 +46,7 @@ public:
 private:
     juce::Label nameLabel;
     juce::Label copyrightLabel;
+    juce::Label licenceLabel;
     juce::HyperlinkButton repoLink;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SoundForkAboutTab)
