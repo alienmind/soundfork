@@ -73,4 +73,5 @@ Testing/
 CMakeUserPresets.json
 
 # Scratch work
-tmp/
+tmp/*
+!tmp/.gitkeep
