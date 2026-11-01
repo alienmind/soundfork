@@ -14,19 +14,25 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
+# CI turns this off: a runner has no plugin folders worth installing into.
+option(SOUNDFORK_COPY_AFTER_BUILD "Install plugins to the system after building" ON)
+
 juce_add_plugin(SoundFork
-    COMPANY_NAME "YourCompany"
+    COMPANY_NAME "AlienMind"
     PLUGIN_MANUFACTURER_CODE Jlpz
     PLUGIN_CODE Sfrk
-    FORMATS VST3 Standalone
+    FORMATS VST3 AAX Standalone
     PRODUCT_NAME "SoundFork"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-    COPY_PLUGIN_AFTER_BUILD TRUE
+    COPY_PLUGIN_AFTER_BUILD ${SOUNDFORK_COPY_AFTER_BUILD}
+    # The default Avid folder needs elevation and AAX is untested, so it stays in the build tree.
+    AAX_COPY_DIR "${CMAKE_BINARY_DIR}/aax-install"
     VST3_CATEGORIES "Fx"
+    AAX_CATEGORY AAX_ePlugInCategory_Effect
 )
 
 target_sources(SoundFork PRIVATE

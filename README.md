@@ -11,6 +11,20 @@ device (e.g. a Bluetooth headset), so you can monitor on your low-latency audio
 interface and a second device at the same time without the second device's
 buffering ever affecting the main signal path.
 
+## Formats
+
+| Format | Status |
+|---|---|
+| VST3 | Built for Ableton Live on Windows |
+| Standalone | For testing the fork without a DAW |
+| AAX | **Untested.** It compiles, but has never been loaded in Pro Tools |
+
+The AAX build is also not signed. Retail Pro Tools only loads plugins signed with Avid's
+PACE tools, so it needs a Pro Tools developer build to load at all.
+
+Builds for each release are on the
+[Releases](https://github.com/alienmind/soundfork/releases) page.
+
 ## How it works
 
 - `processBlock` never modifies the buffer. The host's audio keeps flowing
@@ -79,6 +93,23 @@ next time Ableton Live rescans plugins.
 A Standalone build is also produced at
 `build\SoundFork_artefacts\Release\Standalone\SoundFork.exe`. Run that
 first to exercise the device-fork logic without needing a DAW at all.
+
+The AAX build stays in the build tree, at `build\aax-install\SoundFork.aaxplugin`.
+It is not installed to the Avid folder.
+
+## Releasing
+
+Set the new version in `project(SoundFork VERSION ...)` in `CMakeLists.txt`, commit it, then
+push a matching tag:
+
+```
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+GitHub Actions builds every format and publishes them as a GitHub Release. The build fails
+if the tag and the version differ. A tag with a hyphen, such as `v0.2.0-beta.1`, publishes
+as a prerelease.
 
 ## Testing checklist
 

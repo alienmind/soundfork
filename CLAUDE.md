@@ -47,7 +47,12 @@ design. This file is only the house rules, the things not derivable from the cod
 cmake -B build -G "Visual Studio 18 2026" -A x64
 cmake --build build --config Release --target SoundFork_Standalone
 cmake --build build --config Release --target SoundFork_VST3
+cmake --build build --config Release --target SoundFork_AAX
 ```
+
+AAX is untested and unsigned. Do not describe it as working until it has been loaded in Pro
+Tools. Pushing a `v*` tag publishes a public release, so only the maintainer decides when
+to tag.
 
 The VST3 target also installs the plugin. If Live has the plugin loaded, the file is locked
 and the install step fails with `file INSTALL cannot copy file`, after the compile has
