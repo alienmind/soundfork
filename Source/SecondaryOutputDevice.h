@@ -3,6 +3,7 @@
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <atomic>
+#include "DeviceProfile.h"
 
 // Owns a second, independently-buffered output stream so a stalling or
 // disconnected secondary device (e.g. Bluetooth) can never block the
@@ -24,7 +25,9 @@ public:
     void setOutputDevice(const juce::String& deviceName);
     void setLatencyBufferSize(int samples);
     void setEnabled(bool shouldBeEnabled);
+    void setProfile(int profileIndex);
 
+    int getProfile() const { return profile.load(); }
     juce::String getCurrentDeviceName() const { return currentDeviceName; }
     int getLatencyBufferSize() const { return latencyBufferSizeSamples; }
     bool isEnabled() const { return enabled.load(); }
@@ -60,6 +63,8 @@ private:
     double sampleRate = 44100.0;
     std::atomic<bool> enabled { false };
     std::atomic<bool> deviceRunning { false };
+    std::atomic<int> profile { 0 };
+    DeviceProfileChain profileChain;
 
     std::atomic<int> underrunCount { 0 };
     std::atomic<uint32_t> signalBlockCount { 0 };

@@ -39,6 +39,7 @@ target_sources(SoundFork PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
     Source/SecondaryOutputDevice.cpp
+    Source/DeviceProfile.cpp
 )
 
 # images/disabled.png, stopped.png and playing.png. The editor draws a placeholder

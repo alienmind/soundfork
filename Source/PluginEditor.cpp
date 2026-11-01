@@ -60,6 +60,15 @@ SoundForkMainTab::SoundForkMainTab(SoundForkAudioProcessor& p)
             processor.secondaryOutput.setLatencyBufferSize(kBufferSizeOptions[index]);
     };
 
+    addAndMakeVisible(profileBox);
+    for (size_t i = 0; i < kDeviceProfiles.size(); ++i)
+        profileBox.addItem(kDeviceProfiles[i].name, (int) i + 1);
+    profileBox.setSelectedId(processor.secondaryOutput.getProfile() + 1, juce::dontSendNotification);
+    profileBox.onChange = [this]
+    {
+        processor.secondaryOutput.setProfile(profileBox.getSelectedItemIndex());
+    };
+
     // A rate warning is longer than one line at this window width.
     statusLabel.setMinimumHorizontalScale(1.0f);
     statusLabel.setJustificationType(juce::Justification::topLeft);
@@ -117,6 +126,8 @@ void SoundForkMainTab::resized()
     area.removeFromTop(8);
 
     statusLabel.setBounds(area.removeFromBottom(48));
+    area.removeFromBottom(8);
+    profileBox.setBounds(area.removeFromBottom(28));
     area.removeFromBottom(8);
     bufferSizeBox.setBounds(area.removeFromBottom(28));
     area.removeFromBottom(8);
@@ -194,7 +205,7 @@ SoundForkAudioProcessorEditor::SoundForkAudioProcessorEditor(SoundForkAudioProce
     tabs.addTab("About", background, &aboutTab, false);
     addAndMakeVisible(tabs);
 
-    setSize(420, 620);
+    setSize(420, 656);
 }
 
 SoundForkAudioProcessorEditor::~SoundForkAudioProcessorEditor() = default;

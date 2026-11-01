@@ -8,7 +8,17 @@ A VST3 effect for the end of a DAW's master bus. Tested in Ableton Live 12 only.
 It passes the master signal through completely unchanged, with zero added latency,
 and mirrors a copy of it to a second, independently chosen audio output
 device (e.g. a Bluetooth headset), so you can split the signal without
-buffering ever affecting the main signal path.
+buffering ever affecting the main signal path. The copy can also go through a
+device profile (mono check, phone speaker, laptop speakers, stock earbuds, car),
+a rough emulation of how those devices limit a mix. Profiles never touch the main signal.
+
+## Why?
+
+I usually produce with my ASIO sound card and a pair of headphones, no speaker monitors.
+But for a quick demo I like to stream to the Bluetooth sound system in another room.
+Switching devices in Ableton is slow and it does not always detect them again.
+SoundFork makes the switch instant.
+It is also a quick way to hear how a track translates to a different kind of speaker.
 
 ## Formats
 
@@ -43,12 +53,15 @@ soundfork/
   CMakeLists.txt
   Source/
     PluginProcessor.h/.cpp     JUCE AudioProcessor: pass-through + state
-    PluginEditor.h/.cpp        Device picker, buffer size, enable toggle
+    PluginEditor.h/.cpp        Device picker, buffer size, profile, enable toggle
     SecondaryOutputDevice.h/.cpp  Ring buffer + second output device owner
+    DeviceProfile.h/.cpp       Profile values + DSP, run on the secondary device's thread
 ```
 
 ## Known limitations
 
+- Device profiles are rough models, not measurements of any product, and they play through
+  the secondary device's own response. Neutral wired headphones give the fairest result.
 - No sample-rate conversion: if the secondary device's native rate differs
   from the DAW's session rate, audio will play back pitched/sped. The status
   line shows a warning when this happens.
@@ -84,6 +97,28 @@ cmake --build build --config Release
 
 The first configure will take a few minutes, because it clones JUCE.
 
+To build and install one format, from the repo root:
+
+```
+cmake --build build --config Release --target SoundFork_VST3
+cmake --build build --config Release --target SoundFork_Standalone
+cmake --build build --config Release --target SoundFork_AAX
+```
+
+If `cmake` is not on PATH after a winget install, open a new terminal or call it directly:
+
+```
+& "$env:LOCALAPPDATA\Microsoft\WinGet\Links\cmake.exe" --build build --config Release --target SoundFork_VST3
+```
+
+Close Live before building the VST3. Live locks the installed plugin, so the install step
+fails with `file INSTALL cannot copy file` after the compile has already succeeded.
+
+Use one CMake for a build folder. Switching between CMake versions, for example the one bundled
+with Visual Studio and the winget one, appears to make `FetchContent` clone JUCE again, and a
+file lock during that can leave `build\_deps\juce-src` half deleted. To recover, delete
+`build\_deps\juce-src`, `juce-subbuild` and `juce-build`, then configure again.
+
 Because `COPY_PLUGIN_AFTER_BUILD` is enabled, a successful build copies the
 VST3 straight into the system VST3 folder
 (`C:\Program Files\Common Files\VST3\SoundFork.vst3`), so it should show up
@@ -112,12 +147,12 @@ as a prerelease.
 
 ## Testing checklist
 
-1. Run the Standalone app, pick your Bluetooth device from the dropdown,
+1. Run the Standalone app, pick your secondary audio device from the dropdown,
    confirm audio comes out of it with no main-thread impact.
 2. Load the VST3 in Ableton Live on the master bus and repeat.
 3. Confirm your ASIO interface (used for Ableton's main output) and the
    plugin's WASAPI secondary output can run simultaneously without the
-   UMC driver complaining.
+   UMC driver complaining - with some ASIO drivers this can happen.
 
 ## Future: macOS
 

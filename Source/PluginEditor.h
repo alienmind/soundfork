@@ -26,6 +26,7 @@ private:
     juce::ToggleButton enabledToggle { "Fork to secondary device" };
     juce::ComboBox deviceBox;
     juce::ComboBox bufferSizeBox;
+    juce::ComboBox profileBox;
     juce::Label statusLabel;
 
     juce::Rectangle<int> imageArea;
