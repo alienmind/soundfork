@@ -1,0 +1,97 @@
+# Builds every format on each push and PR. A `v*` tag also publishes a GitHub Release.
+#
+# A tag with a hyphen, such as `v0.2.0-beta.1`, publishes as a prerelease, so a test build
+# can be shared without becoming the latest release.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The version compiled into the plugin comes from CMakeLists.txt. A tag that disagrees
+      # would publish a build that reports the wrong version in its About tab.
+      - name: the tag must be the version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(sed -n 's/^project(SoundFork VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          if [ -z "$VERSION" ]; then
+            echo "::error::could not read the version from CMakeLists.txt"
+            exit 1
+          fi
+          PRE=false
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "${TAG%%-*}" != "$VERSION" ]; then
+              echo "::error::tag $GITHUB_REF_NAME does not match CMakeLists.txt version $VERSION"
+              exit 1
+            fi
+            case "$TAG" in
+              *-*) PRE=true ;;
+            esac
+            VERSION="$TAG"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRE" >> "$GITHUB_OUTPUT"
+          echo "building $VERSION (prerelease: $PRE)"
+
+      # No -G: CMake picks the newest Visual Studio on the runner, which may not be the one
+      # used for local builds.
+      - name: configure
+        run: cmake -B build -A x64 -DSOUNDFORK_COPY_AFTER_BUILD=OFF
+
+      - name: build
+        run: cmake --build build --config Release --parallel --target SoundFork_VST3 SoundFork_AAX SoundFork_Standalone
+
+      - name: package
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $artefacts = "build/SoundFork_artefacts/Release"
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive "$artefacts/VST3/SoundFork.vst3" "dist/SoundFork-$version-windows-x64-VST3.zip"
+          Compress-Archive "$artefacts/AAX/SoundFork.aaxplugin" "dist/SoundFork-$version-windows-x64-AAX-untested.zip"
+          Compress-Archive "$artefacts/Standalone/SoundFork.exe" "dist/SoundFork-$version-windows-x64-Standalone.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: soundfork-windows-x64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: soundfork-windows-x64
+          path: dist
+
+      - name: github release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          prerelease: ${{ needs.build.outputs.prerelease == 'true' }}
+          body: |
+            Windows x64 builds. The AAX build is untested and unsigned: see the README.
+          files: dist/*.zip
+          fail_on_unmatched_files: true
